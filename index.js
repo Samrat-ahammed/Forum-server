@@ -29,6 +29,7 @@ async function run() {
 
     const postsCollection = client.db("postDB").collection("posts");
     const usersCollection = client.db("postDB").collection("users");
+    const commentCollection = client.db("postDB").collection("comments");
 
     // post related....
     app.get("/posts", async (req, res) => {
@@ -36,13 +37,65 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/singlePost", async (req, res) => {
+    //   let query = {};
+    //   if (req.query?.email) {
+    //     query = { email: req.query.email };
+    //   }
+    //   console.log(query);
+    //   const result = await postsCollection.findOne(query);
+    //   res.send(result);
+    // });
+
+    app.get("/singlePost", async (req, res) => {
+      const { email } = req.query;
+      const cursor = postsCollection.find({ email: email });
+      const result = await cursor.toArray();
+      res.send(result);
+    });
+
     app.get("/posts/:id", async (req, res) => {
       const id = req.params.id;
-
       const query = { _id: new ObjectId(id) };
       const result = await postsCollection.findOne(query);
       res.send(result);
     });
+
+    app.post("/posts", async (req, res) => {
+      const query = req.body;
+      const result = await postsCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.delete("/singlePosts/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const result = await postsCollection.deleteOne(query);
+      res.send(result);
+    });
+
+    app.put("/UpVote/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedPost = await postsCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $inc: { upVote: 1 } }
+        // { returnDocument: "after" }
+      );
+
+      res.send(updatedPost.value);
+    });
+
+    app.put("/downVote/:id", async (req, res) => {
+      const id = req.params.id;
+      const updatedPost = await postsCollection.findOneAndUpdate(
+        { _id: new ObjectId(id) },
+        { $inc: { downVote: 1 } }
+        // { returnDocument: "after" }
+      );
+
+      res.send(updatedPost.value);
+    });
+
     // users related .........................
 
     app.post("/users", async (req, res) => {
@@ -54,6 +107,25 @@ async function run() {
         return res.send({ message: "user already exist", insertedId: null });
       }
       const result = await usersCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // Admin related............
+
+    app.get("/users", async (req, res) => {
+      const result = await usersCollection.find().toArray();
+      res.send(result);
+    });
+
+    app.patch("/users/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
 
