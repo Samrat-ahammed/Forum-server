@@ -4,6 +4,7 @@ const cors = require("cors");
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
+const stripe = require("stripe")(process.env.STRIPE_SECRET_KYE);
 
 app.use(cors());
 app.use(express.json());
@@ -30,7 +31,10 @@ async function run() {
     const postsCollection = client.db("postDB").collection("posts");
     const usersCollection = client.db("postDB").collection("users");
     const commentCollection = client.db("postDB").collection("comments");
-    const announcementCollection = client.db("postDB").collection("comments");
+    const paymentsCollection = client.db("postDB").collection("payment");
+    const announcementCollection = client
+      .db("postDB")
+      .collection("announcement");
 
     // post related....
     app.get("/posts", async (req, res) => {
@@ -129,6 +133,7 @@ async function run() {
       res.send(result);
     });
 
+    // comment ..............
     app.post("/comment", async (req, res) => {
       const query = req.body;
       const result = await commentCollection.insertOne(query);
@@ -141,6 +146,78 @@ async function run() {
     //   const comments = await commentCollection.find({ postId }).toArray();
     //   res.send(comments);
     // });
+
+    app.get("/post-comments/:postId", async (req, res) => {
+      const postId = req.params.postId;
+
+      console.log("Requested Post ID:", postId);
+      try {
+        const comments = await commentCollection.find({ postId }).toArray();
+
+        res.send(comments);
+      } catch (error) {
+        console.error("Error retrieving comments:", error);
+        res.status(500).send({ error: "Internal Server Error" });
+      }
+    });
+
+    // announcement related ..............
+
+    app.post("/announcement", async (req, res) => {
+      const query = req.body;
+      const result = await announcementCollection.insertOne(query);
+      res.send(result);
+    });
+
+    app.get("/announcements", async (req, res) => {
+      const result = await announcementCollection.find().toArray();
+      res.send(result);
+    });
+
+    // payment related .......
+
+    app.get("/payments/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = {
+        email: email,
+      };
+
+      if (req.params?.email !== req.decoded?.email) {
+        return res.status(403).send({ message: "forbidden access" });
+      }
+      const result = await paymentsCollection.find(query).toArray();
+      res.send(result);
+    });
+
+    app.post("/create-payment-intent", async (req, res) => {
+      const price = 50;
+
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: price,
+        currency: "usd",
+        payment_method_types: ["card"],
+      });
+
+      console.log(paymentIntent.client_secret);
+
+      res.send({
+        clientSecret: paymentIntent.client_secret,
+      });
+    });
+
+    app.post("/payments", async (req, res) => {
+      const payment = req.body;
+      const paymentResult = await paymentsCollection.insertOne(payment);
+      console.log("payments cart......", payment);
+
+      const query = {
+        _id: {
+          $in: payment.cartIds.map((id) => new ObjectId(id)),
+        },
+      };
+
+      res.send({ paymentResult });
+    });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
