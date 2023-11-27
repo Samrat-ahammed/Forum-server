@@ -30,6 +30,7 @@ async function run() {
     const postsCollection = client.db("postDB").collection("posts");
     const usersCollection = client.db("postDB").collection("users");
     const commentCollection = client.db("postDB").collection("comments");
+    const announcementCollection = client.db("postDB").collection("comments");
 
     // post related....
     app.get("/posts", async (req, res) => {
@@ -92,7 +93,6 @@ async function run() {
         { $inc: { downVote: 1 } }
         // { returnDocument: "after" }
       );
-
       res.send(updatedPost.value);
     });
 
@@ -128,6 +128,19 @@ async function run() {
       const result = await usersCollection.updateOne(filter, updateDoc);
       res.send(result);
     });
+
+    app.post("/comment", async (req, res) => {
+      const query = req.body;
+      const result = await commentCollection.insertOne(query);
+      res.send(result);
+    });
+
+    // app.get("/postsComment/:id", async (req, res) => {
+    //   const postId = req.params.id;
+    //   console.log("Requested Post ID:", postId);
+    //   const comments = await commentCollection.find({ postId }).toArray();
+    //   res.send(comments);
+    // });
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
