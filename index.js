@@ -42,6 +42,13 @@ async function run() {
       res.send(result);
     });
 
+    // app.get("/singlePost/:email", async (req, res) => {
+    //   const email = req.params.email;
+    //   const query = { email: email };
+    //   const result = await postsCollection.findOne(query);
+    //   res.send(result);
+    // });
+
     // app.get("/singlePost", async (req, res) => {
     //   let query = {};
     //   if (req.query?.email) {
@@ -61,6 +68,7 @@ async function run() {
 
     app.get("/posts/:id", async (req, res) => {
       const id = req.params.id;
+      console.log(id);
       const query = { _id: new ObjectId(id) };
       const result = await postsCollection.findOne(query);
       res.send(result);
@@ -121,6 +129,41 @@ async function run() {
       res.send(result);
     });
 
+    app.get("/singleUser/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await usersCollection.findOne(query);
+      res.send(result);
+    });
+
+    app.get("/users/admin/:email", async (req, res) => {
+      try {
+        const email = req.params.email;
+        const query = { email: email };
+        const user = await usersCollection.findOne(query);
+        if (user) {
+          const admin = user.role === "admin";
+          res.send({ admin });
+        } else {
+          res.status(404).send({ error: "User not found" });
+        }
+      } catch (error) {
+        console.error("Error checking admin status:", error);
+        res.status(500).send({ error: "Internal server error" });
+      }
+    });
+
+    app.get("/users/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const user = await usersCollection.findOne(query);
+      let admin = false;
+      if (user) {
+        admin = user?.role === "admin";
+      }
+      res.send({ admin });
+    });
+
     app.patch("/users/admin/:id", async (req, res) => {
       const id = req.params.id;
       const filter = { _id: new ObjectId(id) };
@@ -151,6 +194,7 @@ async function run() {
       const postId = req.params.postId;
 
       console.log("Requested Post ID:", postId);
+      if (!postId) return;
       try {
         const comments = await commentCollection.find({ postId }).toArray();
 
