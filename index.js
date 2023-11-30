@@ -81,23 +81,6 @@ async function run() {
       res.send(result);
     });
 
-    // app.get("/singlePost/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = { email: email };
-    //   const result = await postsCollection.findOne(query);
-    //   res.send(result);
-    // });
-
-    // app.get("/singlePost", async (req, res) => {
-    //   let query = {};
-    //   if (req.query?.email) {
-    //     query = { email: req.query.email };
-    //   }
-    //   console.log(query);
-    //   const result = await postsCollection.findOne(query);
-    //   res.send(result);
-    // });
-
     app.get("/singlePost", async (req, res) => {
       const { email } = req.query;
       const cursor = postsCollection.find({ email: email });
@@ -301,51 +284,6 @@ async function run() {
       res.send(result);
     });
 
-    // payment related .......
-
-    // app.get("/payments/:email", async (req, res) => {
-    //   const email = req.params.email;
-    //   const query = {
-    //     email: email,
-    //   };
-
-    //   if (req.params?.email !== req.decoded?.email) {
-    //     return res.status(403).send({ message: "forbidden access" });
-    //   }
-    //   const result = await paymentsCollection.find(query).toArray();
-    //   res.send(result);
-    // });
-
-    // app.post("/create-payment-intent", async (req, res) => {
-    //   const price = 50;
-
-    //   const paymentIntent = await stripe.paymentIntents.create({
-    //     amount: price,
-    //     currency: "usd",
-    //     payment_method_types: ["card"],
-    //   });
-
-    //   console.log(paymentIntent.client_secret);
-
-    //   res.send({
-    //     clientSecret: paymentIntent.client_secret,
-    //   });
-    // });
-
-    // app.post("/payments", async (req, res) => {
-    //   const payment = req.body;
-    //   const paymentResult = await paymentsCollection.insertOne(payment);
-    //   console.log("payments cart......", payment);
-
-    //   const query = {
-    //     _id: {
-    //       $in: payment.cartIds.map((id) => new ObjectId(id)),
-    //     },
-    //   };
-
-    //   res.send({ paymentResult });
-    // });
-
     // payment intent
     app.post("/create-payment-intent", async (req, res) => {
       const { price } = req.body;
@@ -379,10 +317,10 @@ async function run() {
     });
 
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
-    console.log(
-      "Pinged your deployment. You successfully connected to MongoDB!"
-    );
+    // await client.db("admin").command({ ping: 1 });
+    // console.log(
+    //   "Pinged your deployment. You successfully connected to MongoDB!"
+    // );
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
